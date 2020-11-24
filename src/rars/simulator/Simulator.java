@@ -256,18 +256,18 @@ public class Simulator extends Observable {
             assert se.cause() >= 0 : "Interrupts cannot be handled by the trap handler";
 
             // set the relevant CSRs
-            ControlAndStatusRegisterFile.updateRegister("ucause", se.cause());
-            ControlAndStatusRegisterFile.updateRegister("uepc", pc);
-            ControlAndStatusRegisterFile.updateRegister("utval", se.value());
+            ControlAndStatusRegisterFile.updateRegister("mcause", se.cause());
+            ControlAndStatusRegisterFile.updateRegister("mepc", pc);
+            ControlAndStatusRegisterFile.updateRegister("mtval", se.value());
 
             // Get the interrupt handler if it exists
-            int utvec = ControlAndStatusRegisterFile.getValue("utvec");
+            int mtvec = ControlAndStatusRegisterFile.getValue("mtvec");
 
             // Mode can be ignored because we are only handling traps
-            int base = utvec & 0xFFFFFFFC;
+            int base = mtvec & 0xFFFFFFFC;
 
             ProgramStatement exceptionHandler = null;
-            if ((ControlAndStatusRegisterFile.getValue("ustatus") & 0x1) != 0) { // test user-interrupt enable (UIE)
+            if ((ControlAndStatusRegisterFile.getValue("mstatus") & 0x1) != 0) { // test user-interrupt enable (MIE)
                 try {
                     exceptionHandler = Globals.memory.getStatement(base);
                 } catch (AddressErrorException aee) {
@@ -276,8 +276,8 @@ public class Simulator extends Observable {
             }
 
             if (exceptionHandler != null) {
-                ControlAndStatusRegisterFile.orRegister("ustatus", 0x10); // Set UPIE
-                ControlAndStatusRegisterFile.clearRegister("ustatus", 0x1); // Clear UIE
+                ControlAndStatusRegisterFile.orRegister("mstatus", 0x10); // Set MPIE
+                ControlAndStatusRegisterFile.clearRegister("mstatus", 0x1); // Clear MIE
                 RegisterFile.setProgramCounter(base);
                 return true;
             } else {
@@ -294,18 +294,18 @@ public class Simulator extends Observable {
             int code = cause & 0x7FFFFFFF;
 
             // Don't handle cases where that interrupt isn't enabled
-            assert ((ControlAndStatusRegisterFile.getValue("ustatus") & 0x1) != 0 && (ControlAndStatusRegisterFile.getValue("uie") & (1 << code)) != 0) : "The interrupt handler must be enabled";
+            assert ((ControlAndStatusRegisterFile.getValue("mstatus") & 0x1) != 0 && (ControlAndStatusRegisterFile.getValue("mie") & (1 << code)) != 0) : "The interrupt handler must be enabled";
 
             // set the relevant CSRs
-            ControlAndStatusRegisterFile.updateRegister("ucause", cause);
-            ControlAndStatusRegisterFile.updateRegister("uepc", pc);
-            ControlAndStatusRegisterFile.updateRegister("utval", value);
+            ControlAndStatusRegisterFile.updateRegister("mcause", cause);
+            ControlAndStatusRegisterFile.updateRegister("mepc", pc);
+            ControlAndStatusRegisterFile.updateRegister("mtval", value);
 
             // Get the interrupt handler if it exists
-            int utvec = ControlAndStatusRegisterFile.getValue("utvec");
+            int mtvec = ControlAndStatusRegisterFile.getValue("mtvec");
 
             // Handle vectored mode
-            int base = utvec & 0xFFFFFFFC, mode = utvec & 0x3;
+            int base = mtvec & 0xFFFFFFFC, mode = mtvec & 0x3;
             if (mode == 2) {
                 base += 4 * code;
             }
@@ -317,8 +317,8 @@ public class Simulator extends Observable {
                 // handled below
             }
             if (exceptionHandler != null) {
-                ControlAndStatusRegisterFile.orRegister("ustatus", 0x10); // Set UPIE
-                ControlAndStatusRegisterFile.clearRegister("ustatus", ControlAndStatusRegisterFile.INTERRUPT_ENABLE);
+                ControlAndStatusRegisterFile.orRegister("mstatus", 0x10); // Set UPIE
+                ControlAndStatusRegisterFile.clearRegister("mstatus", ControlAndStatusRegisterFile.INTERRUPT_ENABLE);
                 RegisterFile.setProgramCounter(base);
                 return true;
             } else {
@@ -395,8 +395,8 @@ public class Simulator extends Observable {
                 Globals.memoryAndRegistersLock.lock();
                 try {
                     // Handle pending interupts and traps first
-                    long uip = ControlAndStatusRegisterFile.getValueNoNotify("uip"), uie = ControlAndStatusRegisterFile.getValueNoNotify("uie");
-                    boolean IE = (ControlAndStatusRegisterFile.getValueNoNotify("ustatus") & ControlAndStatusRegisterFile.INTERRUPT_ENABLE) != 0;
+                    long mip = ControlAndStatusRegisterFile.getValueNoNotify("mip"), mie = ControlAndStatusRegisterFile.getValueNoNotify("mie");
+                    boolean IE = (ControlAndStatusRegisterFile.getValueNoNotify("mstatus") & ControlAndStatusRegisterFile.INTERRUPT_ENABLE) != 0;
                     // make sure no interrupts sneak in while we are processing them
                     pc = RegisterFile.getProgramCounter();
                     synchronized (InterruptController.lock) {
@@ -404,23 +404,23 @@ public class Simulator extends Observable {
                                 pendingTimer = InterruptController.timerPending(),
                                 pendingTrap = InterruptController.trapPending();
                         // This is the explicit (in the spec) order that interrupts should be serviced
-                        if (IE && pendingExternal && (uie & ControlAndStatusRegisterFile.EXTERNAL_INTERRUPT) != 0) {
+                        if (IE && pendingExternal && (mie & ControlAndStatusRegisterFile.EXTERNAL_INTERRUPT) != 0) {
                             if (handleInterrupt(InterruptController.claimExternal(), SimulationException.EXTERNAL_INTERRUPT, pc)) {
                                 pendingExternal = false;
-                                uip &= ~0x100;
+                                mip &= ~0x100;
                             } else {
                                 return; // if the interrupt can't be handled, but the interrupt enable bit is high, thats an error
                             }
-                        } else if (IE && (uip & 0x1) != 0 && (uie & ControlAndStatusRegisterFile.SOFTWARE_INTERRUPT) != 0) {
+                        } else if (IE && (mip & 0x1) != 0 && (mie & ControlAndStatusRegisterFile.SOFTWARE_INTERRUPT) != 0) {
                             if (handleInterrupt(0, SimulationException.SOFTWARE_INTERRUPT, pc)) {
-                                uip &= ~0x1;
+                                mip &= ~0x1;
                             } else {
                                 return; // if the interrupt can't be handled, but the interrupt enable bit is high, thats an error
                             }
-                        } else if (IE && pendingTimer && (uie & ControlAndStatusRegisterFile.TIMER_INTERRUPT) != 0) {
+                        } else if (IE && pendingTimer && (mie & ControlAndStatusRegisterFile.TIMER_INTERRUPT) != 0) {
                             if (handleInterrupt(InterruptController.claimTimer(), SimulationException.TIMER_INTERRUPT, pc)) {
                                 pendingTimer = false;
-                                uip &= ~0x10;
+                                mip &= ~0x10;
                             } else {
                                 return; // if the interrupt can't be handled, but the interrupt enable bit is high, thats an error
                             }
@@ -430,10 +430,10 @@ public class Simulator extends Observable {
                                 return;
                             }
                         }
-                        uip |= (pendingExternal ? ControlAndStatusRegisterFile.EXTERNAL_INTERRUPT : 0) | (pendingTimer ? ControlAndStatusRegisterFile.TIMER_INTERRUPT : 0);
+                        mip |= (pendingExternal ? ControlAndStatusRegisterFile.EXTERNAL_INTERRUPT : 0) | (pendingTimer ? ControlAndStatusRegisterFile.TIMER_INTERRUPT : 0);
                     }
-                    if (uip != ControlAndStatusRegisterFile.getValueNoNotify("uip")) {
-                        ControlAndStatusRegisterFile.updateRegister("uip", uip);
+                    if (mip != ControlAndStatusRegisterFile.getValueNoNotify("mip")) {
+                        ControlAndStatusRegisterFile.updateRegister("mip", mip);
                     }
 
                     // always handle interrupts and traps before quiting
@@ -460,7 +460,7 @@ public class Simulator extends Observable {
                         }
                         if (!InterruptController.registerSynchronousTrap(tmp, pc)) {
                             this.pe = tmp;
-                            ControlAndStatusRegisterFile.updateRegister("uepc", pc);
+                            ControlAndStatusRegisterFile.updateRegister("mepc", pc);
                             stopExecution(true, Reason.EXCEPTION);
                             return;
                         } else {
