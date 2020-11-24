@@ -6,3 +6,7 @@ out
 .classpath
 .project
 examples/riscv
+
+# build files
+build/
+rars.jar
