@@ -75,22 +75,22 @@ public class MemoryConfigurations {
 
     // Default configuration comes from SPIM
     private static int[] defaultConfigurationItemValues = {
-            0x00400000, // .text Base Address
-            0x10000000, // Data Segment base address
-            0x10000000, // .extern Base Address
-            0x10008000, // Global Pointer $gp)
-            0x10010000, // .data base Address
-            0x10040000, // heap base address
-            0x7fffeffc, // stack pointer $sp (from SPIM not MIPS)
-            0x7ffffffc, // stack base address
-            0x7fffffff, // highest address in user space
-            0x80000000, // lowest address in kernel space
-            0xffff0000, // MMIO base address
-            0xffffffff, // highest address in kernel (and memory)
-            0x7fffffff, // data segment limit address
-            0x0ffffffc, // text limit address
-            0x10040000, // stack limit address
-            0xffffffff  // memory map limit address
+            0x00000000, // .text Base Address
+            0x00006000, // Data Segment base address
+            0x00007000, // .extern Base Address
+            0x00007800, // Global Pointer $gp)
+            0x00006000, // .data base Address
+            0x0000f000, // heap base address
+            0x00000000, // stack pointer $sp (from SPIM not MIPS)
+            0x0000fffc, // stack base address
+            0x0000ffff, // highest address in user space
+            0x10000000, // lowest address in kernel space
+            0x11000000, // MMIO base address
+            0x1100ffff, // highest address in kernel (and memory)
+            0x0000ffff, // data segment limit address
+            0x00005ffc, // text limit address
+            0x0000f000, // stack limit address
+            0x1100ffff  // memory map limit address
     };
 
     // Compact allows 16 bit addressing, data segment starts at 0
