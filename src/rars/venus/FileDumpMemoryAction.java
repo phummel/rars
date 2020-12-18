@@ -118,9 +118,9 @@ public class FileDumpMemoryAction extends GuiAction {
         highAddressArray = new int[segmentArray.length];
 
 
-        segmentListArray = new String[segmentArray.length];
-        segmentListBaseArray = new int[segmentArray.length];
-        segmentListHighArray = new int[segmentArray.length];
+        segmentListArray = new String[segmentArray.length+1];   // add both segment option
+        segmentListBaseArray = new int[segmentArray.length+1];
+        segmentListHighArray = new int[segmentArray.length+1];
 
         // Calculate the actual highest address to be dumped.  For text segment, this depends on the
         // program length (number of machine code instructions).  For data segment, this depends on
@@ -164,6 +164,23 @@ public class FileDumpMemoryAction extends GuiAction {
                     });
             contents.add(OKButton, BorderLayout.SOUTH);
             return contents;
+        }
+
+        // Create a both .text and .data option covering size of both text and data
+        // only create if both .text and .data segments exist
+        if ((segmentListArray[0] != null) && (segmentListArray[1] != null)) {
+            if (segmentListBaseArray[0] > segmentListBaseArray[1]) {    // .text is after .data
+                segmentListBaseArray[2] = segmentListBaseArray[1];
+                segmentListHighArray[2] = segmentListHighArray[0];
+            }
+            else {                                                      // .text is before .data
+                segmentListBaseArray[2] = segmentListBaseArray[0];  
+                segmentListHighArray[2] = segmentListHighArray[1];
+            }
+            segmentListArray[2] =
+                    "both (" + Binary.intToHexString(segmentListBaseArray[2]) +
+                            " - " + Binary.intToHexString(segmentListHighArray[2]) + ")";
+            segmentCount++; // avoid copying array
         }
 
         // This is needed to assure no null array elements in ComboBox list.
