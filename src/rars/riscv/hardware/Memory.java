@@ -759,7 +759,8 @@ public class Memory extends Observable {
             }
         } else {
             // falls outside addressing range
-            throw new AddressErrorException("address out of range ", SimulationException.LOAD_ACCESS_FAULT, address);
+            //throw new AddressErrorException("address out of range ", SimulationException.LOAD_ACCESS_FAULT, address);
+            value = null;
         }
         // Do not notify observers.  This read operation is initiated by the
         // dump feature, not the executing program.

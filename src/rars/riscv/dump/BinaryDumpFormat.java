@@ -69,7 +69,7 @@ public class BinaryDumpFormat extends AbstractDumpFormat {
             for (int address = firstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
                 Integer temp = memory.getRawWordOrNull(address);
                 if (temp == null)
-                    break;
+                    temp = 0;
                 int word = temp;
                 for (int i = 0; i < 4; i++)
                     out.write((word >>> (i << 3)) & 0xFF);

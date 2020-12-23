@@ -84,13 +84,58 @@ public class SegmentWindowDumpFormat extends AbstractDumpFormat {
         // TODO: check if these settings work right
         boolean hexAddresses = Globals.getSettings().getBooleanSetting(Settings.Bool.DISPLAY_ADDRESSES_IN_HEX);
 
-        // If address in data segment, print in same format as Data Segment Window
-        if (Memory.inDataSegment(firstAddress)) {
-            boolean hexValues = Globals.getSettings().getBooleanSetting(Settings.Bool.DISPLAY_VALUES_IN_HEX);
-            int offset = 0;
-            String string = "";
-            try {
-                for (int address = firstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
+        // test which segments need printing
+        boolean printData = (Memory.inDataSegment(firstAddress) || Memory.inDataSegment(lastAddress));
+        boolean printText = (Memory.inTextSegment(firstAddress) || Memory.inTextSegment(lastAddress));
+        
+        try {
+            // If address in text segment, print in same format as Text Segment Window
+            if (printText) {
+                out.println("Address     Code        Basic                        Line Source");
+                out.println();
+                String string = null;
+                int printFirstAddress = firstAddress;
+
+                // only print out dataSegment here
+                if (firstAddress < Memory.textBaseAddress)
+                    printFirstAddress = Memory.textBaseAddress;
+
+                for (int address = printFirstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
+                    string = ((hexAddresses) ? Binary.intToHexString(address) : Binary.unsignedIntToIntString(address)) + "  ";
+                    Integer temp = memory.getRawWordOrNull(address);
+                    if (temp == null)
+                        break;
+                    string += Binary.intToHexString(temp) + "  ";
+                    try {
+                        ProgramStatement ps = memory.getStatement(address);
+                        string += (ps.getPrintableBasicAssemblyStatement() + "                             ").substring(0, 29);
+                        string += (((ps.getSource() == "") ? "" : Integer.toString(ps.getSourceLine())) + "     ").substring(0, 5);
+                        string += ps.getSource();
+                    } catch (AddressErrorException aee) {
+                    }
+                    out.println(string);
+                }
+            }
+
+            // if printing both, add seperator
+            if (printData && printText) {
+                for (int i = 0; i<2; i++)
+                    out.println();
+                out.println("Address       Data");    
+            }
+
+            // If address in data segment, print in same format as Data Segment Window
+            if (printData) {
+                boolean hexValues = Globals.getSettings().getBooleanSetting(Settings.Bool.DISPLAY_VALUES_IN_HEX);
+                int offset = 0;
+                String string = "";
+                int printFirstAddress = firstAddress;
+
+                // only print out dataSegment here
+                if (firstAddress < Memory.dataBaseAddress)
+                    printFirstAddress = Memory.dataBaseAddress;
+                
+                for (int address = printFirstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
                     if (offset % 8 == 0) {
                         string = ((hexAddresses) ? Binary.intToHexString(address) : Binary.unsignedIntToIntString(address)) + "    ";
                     }
@@ -107,35 +152,6 @@ public class SegmentWindowDumpFormat extends AbstractDumpFormat {
                         string = "";
                     }
                 }
-            } finally {
-                out.close();
-            }
-            return;
-        }
-
-        if (!Memory.inTextSegment(firstAddress)) {
-            return;
-        }
-        
-        // If address in text segment, print in same format as Text Segment Window
-        out.println("Address     Code        Basic                        Line Source");
-        out.println();
-        String string = null;
-        try {
-            for (int address = firstAddress; address <= lastAddress; address += Memory.WORD_LENGTH_BYTES) {
-                string = ((hexAddresses) ? Binary.intToHexString(address) : Binary.unsignedIntToIntString(address)) + "  ";
-                Integer temp = memory.getRawWordOrNull(address);
-                if (temp == null)
-                    break;
-                string += Binary.intToHexString(temp) + "  ";
-                try {
-                    ProgramStatement ps = memory.getStatement(address);
-                    string += (ps.getPrintableBasicAssemblyStatement() + "                             ").substring(0, 29);
-                    string += (((ps.getSource() == "") ? "" : Integer.toString(ps.getSourceLine())) + "     ").substring(0, 5);
-                    string += ps.getSource();
-                } catch (AddressErrorException aee) {
-                }
-                out.println(string);
             }
         } finally {
             out.close();
