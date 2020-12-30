@@ -1,6 +1,6 @@
 if git submodule status | grep \( > /dev/null ; then 
     mkdir -p build
-    find src -name "*.java" | xargs javac -d build
+    find src -name "*.java" | xargs javac -d build --release 8
     find src -type f -not -name "*.java" -exec cp --parents {} build \;
     cp -rf build/src/* build
     rm -r build/src
