@@ -78,7 +78,7 @@ public class MemoryConfigurations {
             0x00000000, // .text Base Address
             0x00006000, // Data Segment base address
             0x00007000, // .extern Base Address
-            0x00007800, // Global Pointer $gp)
+            0x00000000, // Global Pointer $gp)
             0x00006000, // .data base Address
             0x0000f000, // heap base address
             0x00000000, // stack pointer $sp (from SPIM not MIPS)
