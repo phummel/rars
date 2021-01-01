@@ -66,7 +66,8 @@ public class ControlAndStatusRegisterFile {
                 new Register("uip", 0x044, 0),
                 new MaskedRegister("mstatus", 0x300, 0,~0x11),
                 new Register("mie", 0x304, 0),
-                new Register("mtve", 0x304, 0),
+                new Register("mtvec", 0x305, 0),
+                new Register("mscratch", 0x340, 0),
                 new Register("mepc", 0x341, 0),
                 new Register("mcause", 0x342, 0),
                 new Register("mtval", 0x343, 0),
@@ -81,9 +82,9 @@ public class ControlAndStatusRegisterFile {
         tmp[1] = new LinkedRegister("fflags", 0x001, tmp[3], 0x1F);
         tmp[2] = new LinkedRegister("frm", 0x002, tmp[3], 0xE0);
 
-        tmp[21] = new LinkedRegister("cycleh", 0xC80,tmp[18], 0xFFFFFFFF_00000000L);
-        tmp[22] = new LinkedRegister("timeh", 0xC81, tmp[19],0xFFFFFFFF_00000000L);
-        tmp[23] = new LinkedRegister("instreth",0xC82, tmp[20],0xFFFFFFFF_00000000L);
+        tmp[22] = new LinkedRegister("cycleh", 0xC80,tmp[19], 0xFFFFFFFF_00000000L);
+        tmp[23] = new LinkedRegister("timeh", 0xC81, tmp[20],0xFFFFFFFF_00000000L);
+        tmp[24] = new LinkedRegister("instreth",0xC82, tmp[21],0xFFFFFFFF_00000000L);
         instance = new RegisterBlock('_', tmp); // prefix not used
     }
 

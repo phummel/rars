@@ -26,6 +26,7 @@ public class ControlAndStatusWindow extends RegisterBlockWindow {
             /*mstatus"*/ "Machine interrupt status information (set the lowest bit to enable exceptions)",
             /*mie*/    "Finer control for which machine interrupts are enabled",
             /*mtvec*/  "The base address for the machine interrupt",
+            /*mscratch*/"Scratch for processing inside the interrupt handler",
             /*mepc*/   "PC at the time the machine interrupt was triggered",
             /*cycle*/  "Number of clock cycles executed",
             /*time*/   "Time since some time in the past (Milliseconds since 1/1/1970 in RARS)",
